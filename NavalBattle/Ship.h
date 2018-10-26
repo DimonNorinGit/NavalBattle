@@ -4,7 +4,8 @@
 
 namespace ships {
 
-	enum class SHIPS_TYPE  : char {ONE_DECK , TWO_DECK , THREE_DECK , FOUR_DECK};
+	enum class SHIPS_TYPE  : char {ONE_DECK = 0 , TWO_DECK = 1 , THREE_DECK = 2 , FOUR_DECK = 3};
+
 
 	class Ship
 	{

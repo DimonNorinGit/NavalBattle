@@ -35,6 +35,8 @@ namespace gamerules{
 		const u_char SHIP = 1;
 
 		const u_char USED = 2;
+
+		const u_char HIT = 3;
 	}
 
 

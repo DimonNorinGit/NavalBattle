@@ -1,5 +1,5 @@
 #include"Game.h"
-
+#include<locale.h>
 /*class A {
 
 private:
@@ -27,7 +27,7 @@ public:
 
 
 int main() {
-	
+	setlocale(LC_ALL, "Russian");
 	Game game;
 	game.start();
 	

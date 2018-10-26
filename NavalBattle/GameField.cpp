@@ -10,31 +10,54 @@ GameField::GameField()
 
 void GameField::showField()const
 {
+	for (size_t i = 0; i <= field_size_; ++i) {
+		std::cout << "-";
+	}
+	std::cout << std::endl;
 	for (size_t i = 0; i < gamerules::FIELD_SIZE; ++i) {
 		for (size_t j = 0; j < gamerules::FIELD_SIZE; ++j) {
-			std::cout << int(ncells_[i * field_size_ + j].get_status()) << int(ncells_[i * field_size_ + j].get_status());
+			if (ncells_[i * field_size_ + j].get_status() == gamerules::cellstate::HIT) {
+				std::cout << "!";
+			}
+			else if (ncells_[i * field_size_ + j].get_status() == gamerules::cellstate::USED) {
+				std::cout << "*";
+			}
+			else if (ncells_[i * field_size_ + j].get_status() == gamerules::cellstate::SHIP) {
+				std::cout << "^";
+			}
+			else {
+				std::cout << " ";
+			}
 		}
+		std::cout << "|";
 		std::cout << std::endl;
+	}
+	for (size_t i = 0; i <= field_size_; ++i) {
+		std::cout << "-";
 	}
 	std::cout << std::endl;
 }
-/*char GameField::getCellStatus(const size_t x , const size_t y)const
-{
-	//check x and y or not(
-	return ncells_[x][y].get_status();
-}
 
-void GameField::setCellStatus(const size_t x, const size_t y, u_char state)
-{
-	//check x and y and state or not(
-	ncells_[x][y].set_status(state);
-}*/
-
-
-
-FieldCell* GameField::get_cell(const size_t x, const size_t y)const {
+FieldCell* GameField::getCell(const size_t x, const size_t y)const {
 	return const_cast<FieldCell*>(&ncells_[field_size_ * y + x]);
 }
+
+void GameField::fillCells(char* diff, u_char cell_status, ships::Ship* ship) {
+	for (char x = diff[0]; x <= diff[1]; ++x) {
+		for (char y = diff[2]; y <= diff[3]; ++y) {
+			if (x >= 0 && x < field_size_ && y >= 0 && y < field_size_) {
+				if (ncells_[y * field_size_ + x].get_status() == gamerules::cellstate::HIT) {
+					continue;
+				}
+				ncells_[y * field_size_ + x].set_status(cell_status);
+				if (ship) {
+					ncells_[y * field_size_ + x].set_ship(ship);
+				}
+			}
+		}
+	}
+}
+
 
 GameField::~GameField()
 {

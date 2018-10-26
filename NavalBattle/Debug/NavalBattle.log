@@ -1,1 +1,1 @@
-﻿
+﻿c:\vsprojects\navalbattle\navalbattle\game.cpp(14): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных

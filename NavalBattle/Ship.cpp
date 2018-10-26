@@ -2,6 +2,8 @@
 
 using namespace ships;
 
+
+
 Ship::Ship(u_char life)
 {
 	status_ = true;
@@ -27,9 +29,9 @@ void Ship::destroy() {
 }
 
 bool Ship::decreaseLife() {
-	if (!life_) return status_;
-	life_--;
-	if (!life_) {
+	if (life_ == 0) return status_;
+	--life_;
+	if (life_ == 0) {
 		//destroy();
 		status_ = false;
 	}
