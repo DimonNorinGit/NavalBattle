@@ -11,7 +11,7 @@ Gamer::Gamer()
 }
 
 
-void arrangeShips(GameField& field, ShipsFactory& sh_factory, ships::Ship* ship_set[]); {
+void Gamer::arrangeShips(GameField& field, ShipsFactory& sh_factory, ships::Ship* ship_set[]) {
 
 }
 

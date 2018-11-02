@@ -140,7 +140,7 @@ void RandomBot::arrangeShips(GameField& field, ShipsFactory& sh_factory, ships::
 }
 
 
-std::pair<u_char, u_char> RandomBot::play(GameField* field) {
+std::pair<u_char, u_char> RandomBot::play(GameField* field, char* data) {
 
 	u_char field_size = gamerules::FIELD_SIZE;
 	if (ship_status_) {

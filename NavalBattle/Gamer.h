@@ -19,7 +19,7 @@
 	public:
 		Gamer();
 		virtual void arrangeShips(GameField& field, ShipsFactory& sh_factory, ships::Ship* ship_set[]);
-		virtual std::pair<u_char, u_char> play(GameField* field)=0;
+		virtual std::pair<u_char, u_char> play(GameField* field , char* data)=0;
 		virtual void setExtraShot(bool  ship_status);
 		bool decreaseShips();
 	

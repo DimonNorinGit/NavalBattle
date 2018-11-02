@@ -8,7 +8,7 @@ public:
 
 	void arrangeShips(GameField& field, ShipsFactory& sh_factory, ships::Ship* ship_set[]);
 
-	std::pair<u_char, u_char> play(GameField* field);
+	std::pair<u_char, u_char> play(GameField* field, char* data);
 
 	~PersonPlayer();
 };
