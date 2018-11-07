@@ -6,7 +6,7 @@ OptimalBot::OptimalBot()
 {
 }
 
-void OptimalBot::arrangeShips(GameField& field, ShipsFactory& sh_factory, ships::Ship* ship_set[]) {
+void OptimalBot::arrangeShips(GameField& field, ships::Ship* ship_set[]) {
 
 }
 std::pair<u_char, u_char> OptimalBot::play(GameField* field, char* data) {

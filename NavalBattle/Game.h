@@ -31,10 +31,14 @@ class Game
 	SOCKADDR_IN addr_;
 	int addrlen_;
 	int port_{9090};
-	SOCKET sListen;
+	SOCKET sListen_;
 
+	bool isWork_{ true };
+
+	void initGame();
 	u_char defineGamer(Gamer** gamer, u_char type);
 	void decodeShipsArrange(char* buf, int buf_diff, ships::Ship** ship_set);
+	void setShipSet(ships::Ship** ship_set);
 	void packFieldStates(char* buf, int diff, GameField& field);
 	void packCells(char* diff, char* buf, GameField& field, int buf_d);
 	void prepareStage();

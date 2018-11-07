@@ -7,7 +7,7 @@ PersonPlayer::PersonPlayer()
 }
 
 
-void PersonPlayer::arrangeShips(GameField& field, ShipsFactory& sh_factory, ships::Ship* ship_set[]) {
+void PersonPlayer::arrangeShips(GameField& field, ships::Ship* ship_set[]) {
 	u_char field_size = gamerules::FIELD_SIZE;
 	char diff[4];
 	ships::Ship* ship = 0;

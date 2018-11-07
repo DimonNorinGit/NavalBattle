@@ -60,8 +60,8 @@ void Game::decodeShipsArrange(char* buf, int buf_diff, ships::Ship** ship_set) {
 		char bot_x = buf[data_i + 2];
 		char bot_y = buf[data_i + 3];
 
-		char v_size = top_y - bot_y;
-		char g_size = bot_x - top_x;
+		char v_size = std::abs(top_y - bot_y);
+		char g_size = std::abs(top_x - bot_x);
 
 		int ship_type = v_size > g_size ? v_size : g_size;
 
@@ -70,6 +70,20 @@ void Game::decodeShipsArrange(char* buf, int buf_diff, ships::Ship** ship_set) {
 		ship_set[ship_n] = ship;
 	}
 
+}
+
+void Game::setShipSet(ships::Ship** ship_set) {
+	u_char ships_count[] = { gamerules::SHIPS_SET::_one_deck,gamerules::SHIPS_SET::_two_deck,
+							gamerules::SHIPS_SET::_three_deck, gamerules::SHIPS_SET::_four_deck };
+	ships::SHIPS_TYPE ship_type[] = { ships::SHIPS_TYPE::ONE_DECK , ships::SHIPS_TYPE::TWO_DECK ,
+							ships::SHIPS_TYPE::THREE_DECK , ships::SHIPS_TYPE::FOUR_DECK };
+	u_char diff = 0;
+	for (u_char c = 0; c < 4; ++c) {
+		for (u_char s = 0; s < ships_count[c]; ++s) {
+			ship_set[diff  + s] = ship_factory_.get_ship(ship_type[c]);
+		}
+		diff+=ships_count[c];
+	}
 }
 
 
@@ -86,16 +100,12 @@ void Game::packFieldStates(char* buf, int diff ,  GameField& field) {
 			}
 		}
 	}
+	std::cout << "??" << buf_diff << "??";
 }
 
 void Game::prepareStage() {
-	sListen = socket(AF_INET, SOCK_STREAM, NULL);
 
-	bind(sListen, (SOCKADDR*)&addr_, sizeof(addr_));
-
-	listen(sListen, 1);//SOMAXCONN
-
-	SOCKET sConnect = accept(sListen, (SOCKADDR*)&addr_, &addrlen_);
+	SOCKET sConnect = accept(sListen_, (SOCKADDR*)&addr_, &addrlen_);
 
 	if (sConnect == 0) {
 		std::cout << "Connection failed\n";
@@ -115,7 +125,6 @@ void Game::prepareStage() {
 
 	//system("pause");
 
-
 	u_char human_count = 0;
 	human_count += defineGamer(&left_player_, rbuf[0]);
 	human_count += defineGamer(&right_player_, rbuf[1]);
@@ -127,20 +136,23 @@ void Game::prepareStage() {
 	if (human_count) {
 		if (human_count == 1) {
 			decodeShipsArrange(rbuf, 2, ship_set);//если игрок один, он всегда слева
-			left_player_->arrangeShips(left_field_, ship_factory_, ship_set);
-			right_player_->arrangeShips(right_field_, ship_factory_, 0);
+			left_player_->arrangeShips(left_field_, ship_set);
+			setShipSet(ship_set);
+			right_player_->arrangeShips(right_field_, ship_set);
 		}
 		else if (human_count == 2) {
 			decodeShipsArrange(rbuf, 2, ship_set);
-			left_player_->arrangeShips(left_field_, ship_factory_, ship_set);
+			left_player_->arrangeShips(left_field_, ship_set);
 
 			decodeShipsArrange(rbuf, 42, ship_set);
-			right_player_->arrangeShips(right_field_, ship_factory_, ship_set);
+			right_player_->arrangeShips(right_field_, ship_set);
 		}
 	}
 	else {
-		left_player_->arrangeShips(left_field_, ship_factory_, 0);
-		right_player_->arrangeShips(right_field_, ship_factory_, 0);
+		setShipSet(ship_set);
+		left_player_->arrangeShips(left_field_, ship_set);
+		setShipSet(ship_set);
+		right_player_->arrangeShips(right_field_, ship_set);
 	}
 
 	const int sbuf_len = 80;
@@ -148,6 +160,9 @@ void Game::prepareStage() {
 	
 	packFieldStates(sbuf, 0, left_field_);
 	packFieldStates(sbuf, 40, right_field_);
+
+	left_field_.showField();
+	right_field_.showField();
 
 	send(sConnect, sbuf, sbuf_len, 0);
 	closesocket(sConnect);
@@ -171,33 +186,16 @@ void Game::packCells(char* diff, char* buf , GameField& field , int buf_d) {
 				buf[buf_diff++] = x;
 				buf[buf_diff++] = y;
 				cells_count++;
-				std::cout << "---" << int(x) << ' ' << int(y) << std::endl;
+				//std::cout << "---" << int(x) << ' ' << int(y) << std::endl;
 			}
 		}
 	}
 	buf[5] = cells_count;//for client
-	std::cout << "-----" << int(cells_count) << "-------";
+	//std::cout << "-----" << int(cells_count) << "-------";
 }
 
 
 void Game::gameStage() {
-
-	//sListen = socket(AF_INET, SOCK_STREAM, NULL);
-
-	//bind(sListen, (SOCKADDR*)&addr_, sizeof(addr_));
-
-	//listen(sListen, 1);//SOMAXCONN
-
-	//buf->res 1 byte  game_state , 2 bytes cell_x cell_y
-	//buf->send  game_state ship_type 
-
-	// 1 + 1 + cell_count + broken_cells
-	//1 + 1 + 1 + 14 * 2
-	//if (x >= 0 && x < field_size_ && y >= 0 && y < field_size_)
-	//diff[0] = static_cast<char>(ship->getTopXY().first) - 1;
-	//diff[1] = static_cast<char>(ship->getBottomXY().first) + 1;
-	//diff[2] = static_cast<char>(ship->getTopXY().second) - 1;
-	//diff[3] = static_cast<char>(ship->getBottomXY().second) + 1;
 
 	const int rbuf_len = 3;
 	char rbuf[rbuf_len];
@@ -213,10 +211,10 @@ void Game::gameStage() {
 	Gamer* current_gamer = right_player_;
 	GameField* current_field = &left_field_;
 
+	bool isGameEnd = false;
+	while (!isGameEnd) {
 
-	while (true) {
-
-		SOCKET sConnect = accept(sListen, (SOCKADDR*)&addr_, &addrlen_);
+		SOCKET sConnect = accept(sListen_, (SOCKADDR*)&addr_, &addrlen_);
 
 		recv(sConnect , rbuf, rbuf_len , 0);
 		std::cout << rbuf;
@@ -231,6 +229,8 @@ void Game::gameStage() {
 
 		//game_state + ship_state + ship_type + x + y + cells_count + fill_cells 
 
+		bool isExtraShot = false;
+
 		sbuf[3] = shot.first;//shot_x
 		sbuf[4] = shot.second;//shot_y
 		sbuf[0] = 'c';//set game_state: continue game
@@ -238,18 +238,19 @@ void Game::gameStage() {
 		sbuf[5] = 0;//нет клеток для заполнения
 		if (cell->get_status() == gamerules::cellstate::SHIP) {
 			sbuf[1] = 'h';//set ship_state: hit
-
+			isExtraShot = true;
+			//current_gamer->setExtraShot(true);
+			
 
 			cell->set_status(gamerules::cellstate::HIT);
 			ships::Ship* ship = cell->get_ship();
 			bool ship_status = ship->decreaseLife();
 			std::cout << "Попал" << std::endl;
 
-			//current_gamer->setExtraShot(ship_status);
-
 			if (!ship_status) {
 				//сообщить боту об уничтожении корабля
 				sbuf[1] = 'd';//set ship_state: destroy
+				current_gamer->setShipStatus(false);
 
 				//////////////////////////////////
 				//sbuf[2] = ship->getType()
@@ -262,7 +263,6 @@ void Game::gameStage() {
 				diff[2] = static_cast<char>(ship->getTopXY().second) - 1;
 				diff[3] = static_cast<char>(ship->getBottomXY().second) + 1;
 
-
 				packCells(diff, sbuf, *current_field, 6);
 
 				current_field->fillCells(diff, gamerules::cellstate::USED);
@@ -274,8 +274,11 @@ void Game::gameStage() {
 					//end game
 					//than add cheker for which player won
 					sbuf[0] = 'e';//end game
-					break;
+					isGameEnd = true;
 				}
+			}
+			else {
+				current_gamer->setShipStatus(true);
 			}
 		}
 		else {
@@ -287,23 +290,58 @@ void Game::gameStage() {
 
 		send(sConnect, sbuf, sbuf_len , 0);//send data
 
-
-		std::swap(previos_gamer, current_gamer);
-		std::swap(previous_field, current_field);
+		if (!isExtraShot) {
+			std::swap(previos_gamer, current_gamer);
+			std::swap(previous_field, current_field);
+		}
 	}
 
+
+	delete left_player_;
+	delete right_player_;
+
+
 	}
 
 
+void Game::initGame() {
+
+}
 
 
 void Game::start() {
 
-	prepareStage();
+	sListen_ = socket(AF_INET, SOCK_STREAM, NULL);
 
-	gameStage();
+	bind(sListen_, (SOCKADDR*)&addr_, sizeof(addr_));
+
+	listen(sListen_, 1);//SOMAXCONN
+	const int rbuf_len = 1;
+	char rbuf[rbuf_len];
+
+	while (this->isWork_) {
+		SOCKET sConnect = accept(sListen_, (SOCKADDR*)&addr_, &addrlen_);
+		recv(sListen_, rbuf, rbuf_len, 0);
+		if (rbuf[0] == 'b') {
+
+		}
+		else if (rbuf[0] == 's') {
+
+		}
+		else if (rbuf[0] == 'e') {
+			exit(0);
+		}
+		std::cout << "Connect" << std::endl;
+
+		prepareStage();
+		gameStage();
 
 
+
+
+	}
+
+}
 	
 
 
@@ -313,79 +351,6 @@ void Game::start() {
 
 
 	
-
-
-	
-
-
-
-
-	
-
-
-	
-
-
-	
-
-
-
-	/*std::srand(time(0));
-	left_player_ = new RandomBot();
-	left_player_->arrangeShips(left_field_, this->ship_factory_);
-	right_player_ = new RandomBot();
-	right_player_->arrangeShips(right_field_, this->ship_factory_);
-
-
-	Gamer* first_player = left_player_;
-	Gamer* second_player = right_player_;
-	GameField* first_field = &left_field_;
-	GameField* second_field = &right_field_;
-	while (true) {
-		Sleep(5000);
-		system("cls");
-		//left_field_.showField();
-		//right_field_.showField();
-		
-		
-		std::pair<u_char , u_char> shot = first_player->play(second_field);
-		FieldCell* cell = second_field->getCell(shot.first, shot.second);
-		if (cell->get_status() == gamerules::cellstate::SHIP) {
-			cell->set_status(gamerules::cellstate::HIT);
-			ships::Ship* ship = cell->get_ship();
-			bool ship_status = ship->decreaseLife();
-			std::cout << "Попал" << std::endl;
-			first_player->setExtraShot(ship_status);
-			if (!ship_status) {
-				std::cout << "Уничтожил" << std::endl;
-				char diff[4];
-				diff[0] = static_cast<char>(ship->getTopXY().first) - 1;
-				diff[1] = static_cast<char>(ship->getBottomXY().first) + 1;
-				diff[2] = static_cast<char>(ship->getTopXY().second) - 1;
-				diff[3] = static_cast<char>(ship->getBottomXY().second) + 1;
-				second_field->fillCells(diff, gamerules::cellstate::USED);
-				
-				if (!second_player->decreaseShips()) {
-					break;
-				}
-			}
-			second_field->showField();
-		}
-		else {
-			std::cout << "Мимо" << std::endl;
-			first_player->setExtraShot(false);
-			cell->set_status(gamerules::cellstate::USED);
-
-			second_field->showField();
-
-
-			std::swap(first_player, second_player);
-			std::swap(first_field, second_field);
-		}
-	}
-	left_field_.showField();
-	right_field_.showField();*/
-}
 
 
 Game::~Game()

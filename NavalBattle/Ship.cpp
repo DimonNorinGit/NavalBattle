@@ -8,6 +8,7 @@ Ship::Ship(u_char life)
 {
 	status_ = true;
 	life_ = life;
+	len = life;
 }
 
 std::pair<u_char, u_char> Ship::getTopXY()const {
@@ -22,6 +23,11 @@ void Ship::setPos(u_char top_x, u_char top_y, u_char bot_x, u_char bot_y) {
 	this->top_y = top_y;
 	this->bot_x = bot_x;
 	this->bot_y = bot_y;
+}
+
+
+u_char Ship::getLength()const {
+	return len;
 }
 
 void Ship::destroy() {

@@ -11,6 +11,7 @@ namespace ships {
 	{
 		u_char life_;
 		bool status_;
+		u_char len;
 
 		u_char top_x;
 		u_char top_y;
@@ -31,6 +32,8 @@ namespace ships {
 		void setPos(u_char top_x, u_char top_y, u_char bot_x, u_char bot_y);
 
 		bool getStatus()const;
+
+		u_char getLength()const;
 
 		~Ship();
 	};
